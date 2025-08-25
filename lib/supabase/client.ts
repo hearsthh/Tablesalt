@@ -41,6 +41,11 @@ const createMockClient = () => {
 }
 
 export function createClient() {
+  if (!isSupabaseConfigured()) {
+    console.log("[v0] Supabase not configured, returning mock client")
+    return createMockClient() as any
+  }
+
   return createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
 }
 
