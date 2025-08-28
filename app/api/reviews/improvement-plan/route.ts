@@ -1,6 +1,4 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { generateText } from "ai"
-import { xai } from "@ai-sdk/xai"
 import { createClient } from "@/lib/supabase/server"
 
 export async function POST(request: NextRequest) {
@@ -36,44 +34,61 @@ export async function POST(request: NextRequest) {
       {} as Record<number, number>,
     )
 
-    const reviewData = reviews.map((review) => ({
-      rating: review.rating,
-      content: review.content,
-      platform: review.platform,
-      sentiment_label: review.sentiment_label,
-      keywords: review.keywords,
-      created_at: review.created_at,
-    }))
+    const lowRatings = reviews.filter((r) => r.rating <= 3).length
+    const highRatings = reviews.filter((r) => r.rating >= 4).length
+    const negativeReviews = reviews.filter((r) => r.sentiment_label === "negative").length
 
-    const { text } = await generateText({
-      model: xai("grok-4", {
-        apiKey: process.env.XAI_API_KEY,
-      }),
-      prompt: `Analyze these restaurant reviews and create an improvement plan:
+    const insights = [
+      {
+        title: "Overall Rating Performance",
+        description: `Current average rating is ${avgRating.toFixed(1)}/5 stars`,
+        impact: avgRating >= 4 ? "positive" : "needs_attention",
+        priority: avgRating < 3.5 ? "high" : "medium",
+      },
+      {
+        title: "Review Distribution",
+        description: `${highRatings} positive vs ${lowRatings} negative reviews`,
+        impact: "medium",
+        priority: "medium",
+      },
+      {
+        title: "Sentiment Analysis",
+        description: `${negativeReviews} reviews identified as negative sentiment`,
+        impact: "high",
+        priority: negativeReviews > reviews.length * 0.3 ? "high" : "low",
+      },
+    ]
 
-Current Average Rating: ${avgRating.toFixed(1)}/5
-Rating Distribution: ${JSON.stringify(ratingDistribution)}
-Recent Reviews: ${JSON.stringify(reviewData.slice(0, 20), null, 2)}
-
-Create a comprehensive improvement plan to increase the star rating. Focus on:
-1. Most common complaints and how to address them
-2. Service improvement opportunities
-3. Food quality enhancements
-4. Operational changes needed
-5. Specific actionable tasks with priorities
-
-Format as JSON with: summary, insights (array of {title, description, impact, priority}), ctas (array of strings), tasks (array of {task, priority, timeline, department})`,
-      system:
-        "You are a restaurant operations consultant specializing in review analysis and customer satisfaction improvement. Provide specific, actionable recommendations.",
-    })
-
-    const aiResponse = JSON.parse(text)
+    const tasks = [
+      {
+        task: "Address common complaints from low-rated reviews",
+        priority: "high",
+        timeline: "immediate",
+        department: "operations",
+      },
+      {
+        task: "Implement customer feedback collection system",
+        priority: "medium",
+        timeline: "2 weeks",
+        department: "management",
+      },
+      {
+        task: "Train staff on customer service excellence",
+        priority: avgRating < 4 ? "high" : "medium",
+        timeline: "1 month",
+        department: "hr",
+      },
+    ]
 
     return NextResponse.json({
-      summary: aiResponse.summary,
-      insights: aiResponse.insights || [],
-      ctas: aiResponse.ctas || [],
-      tasks: aiResponse.tasks || [],
+      summary: `Analysis of ${reviews.length} reviews shows ${avgRating.toFixed(1)}/5 average rating with improvement opportunities`,
+      insights,
+      ctas: [
+        "Focus on addressing negative feedback patterns",
+        "Implement proactive customer satisfaction measures",
+        "Monitor review trends weekly",
+      ],
+      tasks,
       metadata: {
         currentRating: avgRating,
         totalReviews: reviews.length,

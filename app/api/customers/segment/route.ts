@@ -1,6 +1,4 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { generateText } from "ai"
-import { xai } from "@ai-sdk/xai"
 import { createClient } from "@/lib/supabase/server"
 
 export async function POST(request: NextRequest) {
@@ -27,56 +25,79 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    const customerData = customers.map((customer) => ({
-      total_spent: customer.total_spent,
-      total_orders: customer.total_orders,
-      avg_order_value: customer.avg_order_value,
-      last_order_date: customer.last_order_date,
-      loyalty_points: customer.loyalty_points,
-      customer_segment: customer.customer_segment,
-      preferences: customer.preferences,
-      dietary_restrictions: customer.dietary_restrictions,
-    }))
+    const avgSpent = customers.reduce((sum, c) => sum + (c.total_spent || 0), 0) / customers.length
+    const avgOrders = customers.reduce((sum, c) => sum + (c.total_orders || 0), 0) / customers.length
 
-    const { text } = await generateText({
-      model: xai("grok-4", {
-        apiKey: process.env.XAI_API_KEY,
-      }),
-      prompt: `Analyze this customer data and create meaningful segments:
-
-Customer Data: ${JSON.stringify(customerData.slice(0, 50), null, 2)}
-Total Customers: ${customers.length}
-
-Create customer segments based on:
-1. Spending behavior and frequency
-2. Order patterns and preferences
-3. Loyalty and engagement levels
-4. Churn risk assessment
-5. Growth opportunities
-
-For each segment, provide:
-- Segment name and description
-- Key characteristics
-- Size and value
-- Marketing strategies
-- Retention tactics
-
-Format as JSON with: summary, insights (array of {title, description, impact, segment}), ctas (array of strings), segments (array of {name, description, size, characteristics, strategies})`,
-      system:
-        "You are a customer analytics expert specializing in restaurant customer segmentation and retention strategies. Provide actionable insights for targeted marketing.",
+    const highValue = customers.filter((c) => (c.total_spent || 0) > avgSpent * 1.5)
+    const frequent = customers.filter((c) => (c.total_orders || 0) > avgOrders * 1.5)
+    const recent = customers.filter((c) => {
+      const lastOrder = new Date(c.last_order_date || 0)
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+      return lastOrder > thirtyDaysAgo
     })
 
-    const aiResponse = JSON.parse(text)
+    const segments = [
+      {
+        name: "High Value Customers",
+        description: "Customers who spend significantly above average",
+        size: highValue.length,
+        characteristics: [
+          `Average spend: $${(highValue.reduce((sum, c) => sum + (c.total_spent || 0), 0) / highValue.length || 0).toFixed(2)}`,
+        ],
+        strategies: ["VIP treatment", "Exclusive offers", "Personal outreach"],
+      },
+      {
+        name: "Frequent Visitors",
+        description: "Customers with high order frequency",
+        size: frequent.length,
+        characteristics: [
+          `Average orders: ${(frequent.reduce((sum, c) => sum + (c.total_orders || 0), 0) / frequent.length || 0).toFixed(1)}`,
+        ],
+        strategies: ["Loyalty rewards", "Bulk discounts", "Early access to new items"],
+      },
+      {
+        name: "Recent Customers",
+        description: "Customers who ordered within the last 30 days",
+        size: recent.length,
+        characteristics: ["Active within 30 days"],
+        strategies: ["Retention campaigns", "Feedback collection", "Cross-selling"],
+      },
+    ]
+
+    const insights = [
+      {
+        title: "Customer Value Distribution",
+        description: `${highValue.length} high-value customers generate significant revenue`,
+        impact: "high",
+        segment: "high_value",
+      },
+      {
+        title: "Order Frequency Patterns",
+        description: `${frequent.length} customers show strong loyalty with frequent orders`,
+        impact: "medium",
+        segment: "frequent",
+      },
+      {
+        title: "Customer Activity",
+        description: `${recent.length} customers remain active in the last 30 days`,
+        impact: "medium",
+        segment: "recent",
+      },
+    ]
 
     return NextResponse.json({
-      summary: aiResponse.summary,
-      insights: aiResponse.insights || [],
-      ctas: aiResponse.ctas || [],
-      segments: aiResponse.segments || [],
+      summary: `Customer segmentation analysis of ${customers.length} customers reveals key behavioral patterns`,
+      insights,
+      ctas: [
+        "Develop targeted campaigns for each segment",
+        "Implement loyalty program for frequent customers",
+        "Create win-back campaigns for inactive customers",
+      ],
+      segments,
       metadata: {
         totalCustomers: customers.length,
-        avgSpent: customers.reduce((sum, c) => sum + (c.total_spent || 0), 0) / customers.length,
-        avgOrders: customers.reduce((sum, c) => sum + (c.total_orders || 0), 0) / customers.length,
+        avgSpent,
+        avgOrders,
         timestamp: new Date().toISOString(),
       },
     })

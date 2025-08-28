@@ -1,6 +1,4 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { generateText } from "ai"
-import { xai } from "@ai-sdk/xai"
 import { createClient } from "@/lib/supabase/server"
 
 export async function POST(request: NextRequest) {
@@ -25,51 +23,50 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         summary: "No menu items found",
         insights: [],
-        ctas: ["Add menu items to get AI insights"],
+        ctas: ["Add menu items to get insights"],
         menuScore: 0,
       })
     }
 
-    const menuData = menuItems.map((item) => ({
-      name: item.name,
-      description: item.description,
-      price: item.price,
-      category: item.menu_categories?.name,
-      calories: item.calories,
-      tags: item.tags,
-      dietary_info: item.dietary_info,
-    }))
+    const categories = [...new Set(menuItems.map((item) => item.menu_categories?.name).filter(Boolean))]
+    const avgPrice = menuItems.reduce((sum, item) => sum + (item.price || 0), 0) / menuItems.length
+    const featuredItems = menuItems.filter((item) => item.is_featured)
 
-    const { text } = await generateText({
-      model: xai("grok-4", {
-        apiKey: process.env.XAI_API_KEY,
-      }),
-      prompt: `Analyze this restaurant menu and provide actionable insights:
+    const insights = [
+      {
+        title: "Menu Diversity",
+        description: `Your menu spans ${categories.length} categories with ${menuItems.length} total items`,
+        impact: "high",
+        category: "structure",
+      },
+      {
+        title: "Pricing Analysis",
+        description: `Average item price is $${avgPrice.toFixed(2)}`,
+        impact: "medium",
+        category: "pricing",
+      },
+      {
+        title: "Featured Items",
+        description: `${featuredItems.length} items are currently featured`,
+        impact: "medium",
+        category: "promotion",
+      },
+    ]
 
-Menu Items: ${JSON.stringify(menuData, null, 2)}
-
-Please provide:
-1. Overall menu performance analysis
-2. Pricing optimization suggestions
-3. Popular item predictions
-4. Menu engineering recommendations
-5. Specific actionable insights for each category
-
-Format as JSON with: summary, insights (array of {title, description, impact, category}), ctas (array of strings), menuScore (0-100)`,
-      system:
-        "You are a restaurant menu optimization expert. Provide data-driven insights to improve menu performance, pricing, and customer satisfaction.",
-    })
-
-    const aiResponse = JSON.parse(text)
+    const ctas = [
+      "Review pricing strategy for competitive positioning",
+      "Consider promoting high-margin items",
+      "Analyze customer favorites for menu optimization",
+    ]
 
     return NextResponse.json({
-      summary: aiResponse.summary,
-      insights: aiResponse.insights || [],
-      ctas: aiResponse.ctas || [],
-      menuScore: aiResponse.menuScore || 75,
+      summary: `Menu analysis complete for ${menuItems.length} items across ${categories.length} categories`,
+      insights,
+      ctas,
+      menuScore: Math.min(85, 60 + categories.length * 5 + featuredItems.length * 3),
       metadata: {
         totalItems: menuItems.length,
-        categories: [...new Set(menuItems.map((item) => item.menu_categories?.name).filter(Boolean))],
+        categories,
         timestamp: new Date().toISOString(),
       },
     })

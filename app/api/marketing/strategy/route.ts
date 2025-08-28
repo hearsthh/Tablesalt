@@ -1,6 +1,4 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { generateText } from "ai"
-import { xai } from "@ai-sdk/xai"
 import { createClient } from "@/lib/supabase/server"
 
 export async function POST(request: NextRequest) {
@@ -20,70 +18,72 @@ export async function POST(request: NextRequest) {
     const reviews = reviewsResult.data || []
     const menuItems = menuResult.data || []
 
-    const contextData = {
-      restaurant: {
-        name: restaurant?.name,
-        cuisine_type: restaurant?.cuisine_type,
-        price_range: restaurant?.price_range,
-        description: restaurant?.description,
+    const avgRating = reviews.length > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length : 0
+    const avgSpent =
+      customers.length > 0 ? customers.reduce((sum, c) => sum + (c.total_spent || 0), 0) / customers.length : 0
+    const featuredItems = menuItems.filter((item) => item.is_featured)
+
+    const campaigns = [
+      {
+        name: "Customer Acquisition Campaign",
+        description: "Attract new customers with compelling offers",
+        channels: ["social_media", "local_advertising", "referral_program"],
+        budget: budget === "high" ? "$2000-5000" : budget === "low" ? "$500-1000" : "$1000-2000",
+        timeline: "4-6 weeks",
+        kpis: ["new_customer_count", "cost_per_acquisition", "conversion_rate"],
       },
-      customerInsights: {
-        totalCustomers: customers.length,
-        segments: [...new Set(customers.map((c) => c.customer_segment).filter(Boolean))],
-        avgSpent: customers.reduce((sum, c) => sum + (c.total_spent || 0), 0) / customers.length,
+      {
+        name: "Loyalty & Retention Campaign",
+        description: "Increase repeat visits from existing customers",
+        channels: ["email", "sms", "in_store"],
+        budget: budget === "high" ? "$1000-2000" : budget === "low" ? "$200-500" : "$500-1000",
+        timeline: "ongoing",
+        kpis: ["repeat_visit_rate", "customer_lifetime_value", "retention_rate"],
       },
-      reputation: {
-        avgRating: reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length,
-        commonKeywords: reviews.flatMap((r) => r.keywords || []).slice(0, 10),
+      {
+        name: "Featured Menu Promotion",
+        description: `Promote ${featuredItems.length} featured menu items`,
+        channels: ["social_media", "email", "in_store_displays"],
+        budget: budget === "high" ? "$800-1500" : budget === "low" ? "$200-400" : "$400-800",
+        timeline: "2-3 weeks",
+        kpis: ["featured_item_sales", "average_order_value", "social_engagement"],
       },
-      menu: {
-        totalItems: menuItems.length,
-        featuredItems: menuItems.filter((item) => item.is_featured),
-        priceRange: {
-          min: Math.min(...menuItems.map((item) => item.price || 0)),
-          max: Math.max(...menuItems.map((item) => item.price || 0)),
-        },
+    ]
+
+    const insights = [
+      {
+        title: "Restaurant Positioning",
+        description: `${restaurant?.cuisine_type || "Restaurant"} with ${avgRating.toFixed(1)}/5 rating`,
+        impact: "high",
+        channel: "branding",
       },
-    }
-
-    const { text } = await generateText({
-      model: xai("grok-4", {
-        apiKey: process.env.XAI_API_KEY,
-      }),
-      prompt: `Create a comprehensive marketing strategy for this restaurant:
-
-Restaurant Context: ${JSON.stringify(contextData, null, 2)}
-
-Campaign Requirements:
-- Type: ${campaign_type || "general"}
-- Target Audience: ${target_audience || "all customers"}
-- Budget: ${budget || "moderate"}
-- Goals: ${goals || "increase revenue and customer acquisition"}
-
-Create a detailed marketing strategy including:
-1. Campaign objectives and KPIs
-2. Target audience analysis and personas
-3. Channel strategy (social media, email, local advertising)
-4. Content themes and messaging
-5. Promotional offers and incentives
-6. Timeline and budget allocation
-7. Success metrics and tracking
-
-Format as JSON with: summary, insights (array of {title, description, impact, channel}), ctas (array of strings), campaigns (array of {name, description, channels, budget, timeline, kpis})`,
-      system:
-        "You are a restaurant marketing strategist with expertise in local marketing, customer acquisition, and retention campaigns. Provide specific, actionable marketing strategies.",
-    })
-
-    const aiResponse = JSON.parse(text)
+      {
+        title: "Customer Value Analysis",
+        description: `Average customer spend: $${avgSpent.toFixed(2)}`,
+        impact: "medium",
+        channel: "pricing",
+      },
+      {
+        title: "Menu Promotion Opportunities",
+        description: `${featuredItems.length} featured items ready for promotion`,
+        impact: "medium",
+        channel: "content",
+      },
+    ]
 
     return NextResponse.json({
-      summary: aiResponse.summary,
-      insights: aiResponse.insights || [],
-      ctas: aiResponse.ctas || [],
-      campaigns: aiResponse.campaigns || [],
+      summary: `Marketing strategy developed for ${restaurant?.name || "restaurant"} focusing on ${campaign_type || "general"} campaigns`,
+      insights,
+      ctas: [
+        "Launch customer acquisition campaign with local targeting",
+        "Implement loyalty program for repeat customers",
+        "Create social media content showcasing featured items",
+      ],
+      campaigns,
       metadata: {
         restaurantName: restaurant?.name,
-        contextData,
+        avgRating,
+        totalCustomers: customers.length,
         timestamp: new Date().toISOString(),
       },
     })
