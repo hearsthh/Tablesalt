@@ -15,6 +15,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@ai-sdk/xai": "latest",
     "@aws-sdk/client-s3": "latest",
     "@google-cloud/storage": "latest",
     "@hello-pangea/dnd": "^16.6.0",
@@ -39,6 +40,7 @@
     "@radix-ui/react-tooltip": "^1.0.7",
     "@supabase/ssr": "latest",
     "@supabase/supabase-js": "latest",
+    "ai": "latest",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "latest",
@@ -58,6 +60,7 @@
     "tailwindcss-animate": "^1.0.7",
     "use-sync-external-store": "latest",
     "vaul": "latest",
+    "zod": "latest",
     "zustand": "latest"
   },
   "devDependencies": {
