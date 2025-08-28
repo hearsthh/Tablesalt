@@ -4,17 +4,22 @@ import { createServerClient } from "@/lib/supabase/server"
 import { cookies } from "next/headers"
 
 export async function GET(request: NextRequest) {
-  // Webhook verification for WhatsApp
-  const { searchParams } = new URL(request.url)
-  const mode = searchParams.get("hub.mode")
-  const token = searchParams.get("hub.verify_token")
-  const challenge = searchParams.get("hub.challenge")
+  try {
+    // Webhook verification for WhatsApp
+    const { searchParams } = new URL(request.url)
+    const mode = searchParams.get("hub.mode")
+    const token = searchParams.get("hub.verify_token")
+    const challenge = searchParams.get("hub.challenge")
 
-  if (mode === "subscribe" && token === socialMediaConfig.whatsapp.webhookVerifyToken) {
-    return new Response(challenge, { status: 200 })
+    if (mode === "subscribe" && token === socialMediaConfig.whatsapp.webhookVerifyToken) {
+      return new Response(challenge, { status: 200 })
+    }
+
+    return new Response("Forbidden", { status: 403 })
+  } catch (error) {
+    console.error("WhatsApp webhook verification error:", error)
+    return NextResponse.json({ error: "Webhook verification failed" }, { status: 500 })
   }
-
-  return new Response("Forbidden", { status: 403 })
 }
 
 export async function POST(request: NextRequest) {
@@ -40,32 +45,47 @@ export async function POST(request: NextRequest) {
 }
 
 async function processWhatsAppMessage(messageData: any) {
-  const cookieStore = cookies()
-  const supabase = createServerClient(cookieStore)
+  try {
+    const cookieStore = cookies()
+    const supabase = createServerClient(cookieStore)
 
-  if (!supabase) return
+    if (!supabase) return
 
-  // Store incoming messages in database
-  for (const message of messageData.messages || []) {
-    await supabase.from("whatsapp_messages").insert({
-      message_id: message.id,
-      from_number: message.from,
-      to_number: messageData.metadata?.phone_number_id,
-      message_type: message.type,
-      content: message.text?.body || JSON.stringify(message),
-      timestamp: new Date(Number.parseInt(message.timestamp) * 1000).toISOString(),
-      status: "received",
-    })
-  }
+    // Store incoming messages in database
+    for (const message of messageData.messages || []) {
+      try {
+        await supabase.from("whatsapp_messages").insert({
+          message_id: message.id,
+          from_number: message.from,
+          to_number: messageData.metadata?.phone_number_id,
+          message_type: message.type,
+          content: message.text?.body || JSON.stringify(message),
+          timestamp: new Date(Number.parseInt(message.timestamp) * 1000).toISOString(),
+          status: "received",
+        })
+      } catch (insertError) {
+        console.error("Error inserting WhatsApp message:", insertError)
+        // Continue processing other messages
+      }
+    }
 
-  // Process message status updates
-  for (const status of messageData.statuses || []) {
-    await supabase
-      .from("whatsapp_messages")
-      .update({
-        status: status.status,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("message_id", status.id)
+    // Process message status updates
+    for (const status of messageData.statuses || []) {
+      try {
+        await supabase
+          .from("whatsapp_messages")
+          .update({
+            status: status.status,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("message_id", status.id)
+      } catch (updateError) {
+        console.error("Error updating WhatsApp message status:", updateError)
+        // Continue processing other statuses
+      }
+    }
+  } catch (error) {
+    console.error("Error processing WhatsApp message:", error)
+    // Don't throw - this is called from webhook handler
   }
 }
