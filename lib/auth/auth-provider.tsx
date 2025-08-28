@@ -26,19 +26,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [isDemo] = useState(true) // Always use demo mode for v0 preview
   const router = useRouter()
-  const supabase = createClient()
 
   console.log("[v0] AuthProvider initializing - isDemo:", isDemo, "isSupabaseConfigured:", isSupabaseConfigured())
 
   const createUserProfile = async (user: User) => {
     if (!isSupabaseConfigured()) return
 
-    const { error } = await supabase.from("profiles").upsert({
-      id: user.id,
-      email: user.email!,
-      full_name: user.user_metadata?.full_name || null,
-      avatar_url: user.user_metadata?.avatar_url || null,
-    })
+    const { error } = await createClient()
+      .from("profiles")
+      .upsert({
+        id: user.id,
+        email: user.email!,
+        full_name: user.user_metadata?.full_name || null,
+        avatar_url: user.user_metadata?.avatar_url || null,
+      })
 
     if (error) {
       console.error("Error creating user profile:", error)
@@ -48,19 +49,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const createDefaultRestaurant = async (userId: string, userEmail: string) => {
     if (!isSupabaseConfigured()) return
 
-    const { data: existingRestaurant } = await supabase.from("restaurants").select("id").eq("owner_id", userId).single()
+    const { data: existingRestaurant } = await createClient()
+      .from("restaurants")
+      .select("id")
+      .eq("owner_id", userId)
+      .single()
 
     if (!existingRestaurant) {
-      const { error } = await supabase.from("restaurants").insert({
-        owner_id: userId,
-        name: "My Restaurant",
-        description: "Welcome to your restaurant! Update your details to get started.",
-        email: userEmail,
-        settings: {
-          onboarding_completed: false,
-          demo_data_loaded: true,
-        },
-      })
+      const { error } = await createClient()
+        .from("restaurants")
+        .insert({
+          owner_id: userId,
+          name: "My Restaurant",
+          description: "Welcome to your restaurant! Update your details to get started.",
+          email: userEmail,
+          settings: {
+            onboarding_completed: false,
+            demo_data_loaded: true,
+          },
+        })
 
       if (error) {
         console.error("Error creating default restaurant:", error)
@@ -70,6 +77,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     console.log("[v0] AuthProvider useEffect starting")
+
+    const supabase = createClient()
 
     if (isDemo) {
       const mockUser = {
@@ -133,11 +142,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })
 
     return () => subscription.unsubscribe()
-  }, [router, supabase.auth, isDemo])
+  }, [router, isDemo])
 
   const signIn = async (email: string, password: string) => {
+    const supabase = createClient()
+
     if (isDemo) {
-      // Simulate successful login in demo mode
       const mockUser = {
         id: "demo-user-id",
         email,
@@ -162,8 +172,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signUp = async (email: string, password: string, metadata?: any) => {
+    const supabase = createClient()
+
     if (isDemo) {
-      // In demo mode, treat signup same as signin
       return await signIn(email, password)
     }
 
@@ -179,6 +190,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signOut = async () => {
+    const supabase = createClient()
+
     if (isDemo) {
       setUser(null)
       setSession(null)
@@ -190,8 +203,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const resetPassword = async (email: string) => {
+    const supabase = createClient()
+
     if (isDemo) {
-      return { error: null } // No-op in demo mode
+      return { error: null }
     }
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -201,8 +216,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const updateProfile = async (updates: any) => {
+    const supabase = createClient()
+
     if (isDemo) {
-      return { error: null } // No-op in demo mode
+      return { error: null }
     }
 
     const { error } = await supabase.auth.updateUser({

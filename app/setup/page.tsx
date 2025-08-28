@@ -60,13 +60,36 @@ export default function SetupPage() {
       if (!user) return
 
       try {
+        if (user.email === "demo@tablesalt.ai") {
+          // Demo mode - use sample data
+          setSetupProgress({
+            restaurant_info: true,
+            integrations: true,
+            data_import: false,
+          })
+          setLoading(false)
+          return
+        }
+
         const response = await fetch("/api/v1/setup/progress")
         if (response.ok) {
           const { data } = await response.json()
           setSetupProgress(data)
+        } else {
+          // Fallback to demo data if API fails
+          setSetupProgress({
+            restaurant_info: false,
+            integrations: false,
+            data_import: false,
+          })
         }
       } catch (error) {
         console.error("Failed to load setup progress:", error)
+        setSetupProgress({
+          restaurant_info: false,
+          integrations: false,
+          data_import: false,
+        })
       } finally {
         setLoading(false)
       }

@@ -13,10 +13,11 @@ import {
   BarChart3,
   Settings,
   HelpCircle,
-  Lightbulb,
   FileText,
   Palette,
   Sparkles,
+  Users,
+  TrendingUp,
 } from "lucide-react"
 import Link from "next/link"
 
@@ -26,9 +27,10 @@ export function NavigationDrawer() {
   const mainNavItems = [
     { href: "/dashboard", icon: Home, label: "Dashboard", badge: null },
     { href: "/menu", icon: ChefHat, label: "Menu Intelligence", badge: "AI" },
-    { href: "/customer-intelligence", icon: Lightbulb, label: "Customer Intelligence", badge: "AI" },
+    { href: "/customers", icon: Users, label: "Customer Intelligence", badge: "AI" },
     { href: "/reviews", icon: MessageSquare, label: "Reviews", badge: "3" },
     { href: "/marketing", icon: BarChart3, label: "Marketing Hub", badge: null },
+    { href: "/analytics", icon: TrendingUp, label: "Analytics", badge: null },
   ]
 
   const aiToolsItems = [

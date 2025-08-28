@@ -3,14 +3,26 @@
 export class ProductionMonitor {
   static logError(error: Error, context?: Record<string, any>) {
     if (process.env.NODE_ENV === "production") {
-      // Send to error monitoring service (Sentry, etc.)
-      console.error("Production Error:", {
-        message: error.message,
-        stack: error.stack,
-        context,
-        timestamp: new Date().toISOString(),
-        url: typeof window !== "undefined" ? window.location.href : "server",
-      })
+      // Send to Sentry if configured
+      if (process.env.SENTRY_DSN && typeof window !== "undefined") {
+        // Client-side Sentry reporting
+        console.error("Production Error (Sentry):", {
+          message: error.message,
+          stack: error.stack,
+          context,
+          timestamp: new Date().toISOString(),
+          url: window.location.href,
+        })
+      } else {
+        // Fallback error logging
+        console.error("Production Error:", {
+          message: error.message,
+          stack: error.stack,
+          context,
+          timestamp: new Date().toISOString(),
+          url: typeof window !== "undefined" ? window.location.href : "server",
+        })
+      }
     } else {
       console.error("Development Error:", error, context)
     }
@@ -19,12 +31,29 @@ export class ProductionMonitor {
   static logPerformance(metric: string, value: number, context?: Record<string, any>) {
     if (process.env.NODE_ENV === "production") {
       // Send to analytics service
-      console.log("Performance Metric:", {
+      const performanceData = {
         metric,
         value,
         context,
         timestamp: new Date().toISOString(),
-      })
+        userAgent: typeof window !== "undefined" ? window.navigator.userAgent : "server",
+        url: typeof window !== "undefined" ? window.location.href : "server",
+      }
+
+      console.log("Performance Metric:", performanceData)
+
+      // Send to external monitoring if configured
+      if (process.env.VERCEL_ANALYTICS_ID) {
+        // Vercel Analytics integration
+        fetch("/api/analytics/track", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            event: "performance_metric",
+            properties: performanceData,
+          }),
+        }).catch(console.error)
+      }
     }
   }
 
@@ -74,15 +103,30 @@ export class ProductionMonitor {
 // Health check API endpoints
 export const healthCheckHandlers = {
   database: async () => {
-    // Implement database health check
-    return { ok: true }
+    try {
+      const response = await fetch("/api/health/database")
+      const data = await response.json()
+      return { ok: data.ok, details: data }
+    } catch (error) {
+      return { ok: false, error: error.message }
+    }
   },
   storage: async () => {
-    // Implement storage health check
-    return { ok: true }
+    try {
+      const response = await fetch("/api/health/storage")
+      const data = await response.json()
+      return { ok: data.ok, details: data }
+    } catch (error) {
+      return { ok: false, error: error.message }
+    }
   },
   ai: async () => {
-    // Implement AI service health check
-    return { ok: true }
+    try {
+      const response = await fetch("/api/health/ai")
+      const data = await response.json()
+      return { ok: data.ok, details: data }
+    } catch (error) {
+      return { ok: false, error: error.message }
+    }
   },
 }

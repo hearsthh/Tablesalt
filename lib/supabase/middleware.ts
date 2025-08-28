@@ -9,9 +9,8 @@ export async function updateSession(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-  // If Supabase is not configured (like in v0 preview), skip authentication
-  if (!supabaseUrl || !supabaseAnonKey) {
-    console.log("[v0] Supabase not configured in middleware, skipping auth checks")
+  if (!supabaseUrl || !supabaseAnonKey || process.env.NODE_ENV === "development") {
+    console.log("[v0] Middleware: Skipping auth checks (demo mode or v0 preview)")
     return supabaseResponse
   }
 

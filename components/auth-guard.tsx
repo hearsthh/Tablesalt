@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { useDemoAuth } from "@/lib/auth/demo-auth-provider"
+import { useAuth } from "@/lib/auth/auth-provider"
 
 interface AuthGuardProps {
   children: React.ReactNode
@@ -12,7 +12,7 @@ interface AuthGuardProps {
 }
 
 export function AuthGuard({ children, redirectTo = "/login" }: AuthGuardProps) {
-  const { user, loading } = useDemoAuth()
+  const { user, loading } = useAuth()
   const router = useRouter()
   const [isChecking, setIsChecking] = useState(true)
 
