@@ -40,7 +40,6 @@ import {
 } from "lucide-react"
 import { NavigationDrawer } from "@/components/navigation-drawer"
 import { CalendarView } from "@/components/calendar-view" // Import CalendarView component
-import { AIMarketingContentGenerator } from "@/components/ai-marketing-content-generator"
 
 const CHANNELS = {
   Instagram: {
@@ -845,7 +844,9 @@ export default function MarketingPage() {
                     Generate personalized marketing campaigns, social media content, and promotional materials using AI
                   </p>
                 </div>
-                <AIMarketingContentGenerator />
+                <div className="p-8 text-center text-gray-500">
+                  <p>AI Marketing Content Generator is temporarily unavailable</p>
+                </div>
               </div>
             )}
           </div>

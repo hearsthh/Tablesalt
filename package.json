@@ -51,7 +51,7 @@
     "qrcode": "^1.5.3",
     "react": "^18",
     "react-dom": "^18",
-    "recharts": "latest",
+    "recharts": "^2.8.0",
     "sonner": "latest",
     "stripe": "latest",
     "tailwind-merge": "^2.5.5",

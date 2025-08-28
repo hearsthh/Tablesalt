@@ -29,7 +29,6 @@ import {
   Utensils,
 } from "lucide-react"
 import { NavigationDrawer } from "@/components/navigation-drawer"
-import { AdvancedCharts } from "@/components/advanced-charts"
 
 const useToast = () => {
   const toast = (options: any) => {
@@ -420,7 +419,8 @@ export default function InsightsPage() {
                           <DialogHeader>
                             <DialogTitle>Advanced Analytics Charts</DialogTitle>
                           </DialogHeader>
-                          <AdvancedCharts />
+                          {/* Placeholder for AdvancedCharts component */}
+                          <div className="p-4">Advanced Charts Component Placeholder</div>
                         </DialogContent>
                       </Dialog>
                       <Button variant="outline" className="h-16 flex-col gap-2 bg-transparent">

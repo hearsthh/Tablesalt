@@ -24,9 +24,6 @@ import {
   Clock,
 } from "lucide-react"
 import { NavigationDrawer } from "@/components/navigation-drawer"
-import { UnifiedCommunicationPanel } from "@/components/unified-communication-panel"
-import { NotificationCenter } from "@/components/notification-center"
-import { BulkCommunicationPanel } from "@/components/bulk-communication-panel"
 import { enhancedApiClient } from "@/lib/api/enhanced-api-client"
 import { useToast } from "@/hooks/use-toast"
 
@@ -238,7 +235,7 @@ export default function CustomerIntelligencePage() {
             </div>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <NotificationCenter />
+            {/* <NotificationCenter /> */}
             <Button variant="ghost" size="sm" onClick={handleRefresh} disabled={isRefreshing} className="p-2">
               <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
             </Button>
@@ -375,14 +372,7 @@ export default function CustomerIntelligencePage() {
                   : `Select all (${filteredCustomers.length})`}
               </span>
             </div>
-            {selectedCustomers.length > 0 && (
-              <BulkCommunicationPanel
-                selectedCustomers={getSelectedCustomersData()}
-                onComplete={() => {
-                  setSelectedCustomers([])
-                }}
-              />
-            )}
+            {/* Removed BulkCommunicationPanel */}
           </div>
         )}
 
@@ -536,25 +526,7 @@ export default function CustomerIntelligencePage() {
                 {/* Single Unified Communication Button */}
                 <div className="p-4 border-t border-gray-100">
                   <div className="flex gap-2">
-                    <UnifiedCommunicationPanel
-                      customer={{
-                        id: customer.id,
-                        name: customer.name,
-                        email: customer.email,
-                        phone: customer.phone,
-                        segment: customer.segment,
-                        behaviorTags: customer.behaviorTags || [],
-                        favoriteItems: customer.favoriteItems,
-                        lastOrder: customer.lastOrder,
-                        totalOrders: customer.totalOrders,
-                        totalSpent: customer.totalSpent,
-                        avgOrderValue: customer.avgOrderValue,
-                        churnRisk: customer.churnRisk,
-                        aiSegment: customer.aiSegment,
-                        avatar: customer.avatar,
-                      }}
-                    />
-
+                    {/* Removed UnifiedCommunicationPanel */}
                     <Dialog>
                       <DialogTrigger asChild>
                         <Button variant="outline" size="sm" className="flex-1 bg-transparent">

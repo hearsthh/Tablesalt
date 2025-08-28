@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { AIImportFlow } from "@/components/ai-import-flow"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 
@@ -59,13 +58,7 @@ export default function ImportDataPage() {
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto px-4 py-4 sm:py-6">
-        <AIImportFlow
-          selectedIntegrations={selectedIntegrations}
-          onImportComplete={handleImportComplete}
-          onBack={handleBack}
-        />
-      </div>
+      <div className="max-w-4xl mx-auto px-4 py-4 sm:py-6">{/* AIImportFlow component is removed */}</div>
     </div>
   )
 }
