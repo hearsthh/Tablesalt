@@ -12,9 +12,8 @@ export default function DashboardPage() {
 
 // app/reviews/page.tsx
 import { PageViewTracker } from "@/components/page-view-tracker"
-import { logEvent } from "@/lib/analytics"
-import Button from "@/components/button"
-import Send from "@/components/send-icon"
+import { Button } from "@/components/ui/button"
+import { Send } from 'lucide-react'
 
 export default function ReviewsPage() {
   return (
@@ -24,7 +23,7 @@ export default function ReviewsPage() {
       <Button
         size="sm"
         className="h-8 px-3 text-xs bg-gray-900 text-white hover:bg-gray-700 rounded-md"
-        onClick={() => logEvent("review_response_sent", { message: "Response sent from Reviews page" })}
+        onClick={() => console.log("Response sent from Reviews page")}
       >
         <Send className="h-3 w-3 mr-1" />
         Send Response
@@ -35,9 +34,8 @@ export default function ReviewsPage() {
 
 // app/marketing/page.tsx
 import { PageViewTracker } from "@/components/page-view-tracker"
-import { logEvent } from "@/lib/analytics"
-import Button from "@/components/button"
-import toast from "@/lib/toast"
+import { Button } from "@/components/ui/button"
+import { toast } from "@/hooks/use-toast"
 
 export default function MarketingPage() {
   return (
@@ -47,14 +45,14 @@ export default function MarketingPage() {
       <Button
         onClick={() => { 
           toast({ title: "New Strategy", description: "Creating a new marketing strategy." }); 
-          logEvent("campaign_started", { message: "New strategy initiated" }); 
+          console.log("New strategy initiated"); 
         }}
       >
         New Strategy
       </Button>
       {/* rest of code here */}
       <Button
-        onClick={() => logEvent("campaign_started", { message: `Started campaign ${campaign.name}` })}
+        onClick={() => console.log("Started campaign")}
       >
         Start
       </Button>
@@ -64,8 +62,7 @@ export default function MarketingPage() {
 
 // app/customers/page.tsx
 import { PageViewTracker } from "@/components/page-view-tracker"
-import { logEvent } from "@/lib/analytics"
-import Button from "@/components/button"
+import { Button } from "@/components/ui/button"
 
 export default function CustomersPage() {
   return (
@@ -73,7 +70,7 @@ export default function CustomersPage() {
       <PageViewTracker page="/customers" />
       {/* rest of code here */}
       <Button
-        onClick={() => logEvent("customer_contacted", { message: `Contacted ${customer.name}` })}
+        onClick={() => console.log("Customer contacted")}
       >
         Contact
       </Button>
@@ -83,28 +80,27 @@ export default function CustomersPage() {
 
 // app/integrations/page.tsx
 import { PageViewTracker } from "@/components/page-view-tracker"
-import { logEvent } from "@/lib/analytics"
-import Button from "@/components/button"
+import { Button } from "@/components/ui/button"
 
 export default function IntegrationsPage() {
-  const handleConnect = (integrationId) => {
+  const handleConnect = (integrationId: string) => {
     // update state here
-    logEvent("integration_connected", { message: `Connected ${integrationId}` })
+    console.log(`Connected ${integrationId}`)
   }
 
-  const handleDisconnect = (integrationId) => {
+  const handleDisconnect = (integrationId: string) => {
     // update state here
-    logEvent("integration_disconnected", { message: `Disconnected ${integrationId}` })
+    console.log(`Disconnected ${integrationId}`)
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
       <PageViewTracker page="/integrations" />
       {/* rest of code here */}
-      <Button onClick={() => handleConnect(integrationId)}>
+      <Button onClick={() => handleConnect("integration")}>
         Connect
       </Button>
-      <Button onClick={() => handleDisconnect(integrationId)}>
+      <Button onClick={() => handleDisconnect("integration")}>
         Disconnect
       </Button>
     </div>
