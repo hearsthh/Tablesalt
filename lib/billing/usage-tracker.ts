@@ -1,18 +1,16 @@
 import { createServerClient } from "@/lib/supabase/server"
-import { cookies } from "next/headers"
 
 export type UsageType = "ai_generations" | "campaigns" | "menu_items" | "api_calls" | "social_posts"
 
 export class UsageTracker {
-  private supabase
-
-  constructor() {
-    const cookieStore = cookies()
-    this.supabase = createServerClient(cookieStore)
+  private async getSupabaseClient() {
+    return await createServerClient()
   }
 
   async trackUsage(userId: string, resourceType: UsageType, count = 1): Promise<void> {
-    if (!this.supabase) {
+    const supabase = await this.getSupabaseClient()
+
+    if (!supabase) {
       console.warn("Usage tracking unavailable - database connection failed")
       return
     }
@@ -21,7 +19,7 @@ export class UsageTracker {
       const currentPeriod = this.getCurrentBillingPeriod()
 
       // Get or create usage record for current period
-      const { data: existingUsage } = await this.supabase
+      const { data: existingUsage } = await supabase
         .from("usage_tracking")
         .select("*")
         .eq("user_id", userId)
@@ -31,7 +29,7 @@ export class UsageTracker {
 
       if (existingUsage) {
         // Update existing usage
-        await this.supabase
+        await supabase
           .from("usage_tracking")
           .update({
             usage_count: existingUsage.usage_count + count,
@@ -40,7 +38,7 @@ export class UsageTracker {
           .eq("id", existingUsage.id)
       } else {
         // Create new usage record
-        await this.supabase.from("usage_tracking").insert({
+        await supabase.from("usage_tracking").insert({
           user_id: userId,
           resource_type: resourceType,
           usage_count: count,
@@ -54,12 +52,14 @@ export class UsageTracker {
   }
 
   async getUserUsage(userId: string, resourceType?: UsageType): Promise<any[]> {
-    if (!this.supabase) {
+    const supabase = await this.getSupabaseClient()
+
+    if (!supabase) {
       return []
     }
 
     try {
-      let query = this.supabase.from("usage_tracking").select("*").eq("user_id", userId)
+      let query = supabase.from("usage_tracking").select("*").eq("user_id", userId)
 
       if (resourceType) {
         query = query.eq("resource_type", resourceType)
