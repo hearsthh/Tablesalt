@@ -24,7 +24,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
-  const [isDemo] = useState(true) // Always use demo mode for v0 preview
+  const [isDemo] = useState(process.env.NODE_ENV === "development" || !isSupabaseConfigured())
   const router = useRouter()
 
   console.log("[v0] AuthProvider initializing - isDemo:", isDemo, "isSupabaseConfigured:", isSupabaseConfigured())
