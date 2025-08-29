@@ -3,6 +3,8 @@ import { createStripeClient, SUBSCRIPTION_PLANS } from "@/lib/stripe/config"
 import { createSupabaseServerClient } from "@/lib/supabase/server"
 import { cookies } from "next/headers"
 
+export const dynamic = "force-dynamic"
+
 export async function POST(request: NextRequest) {
   try {
     const stripe = createStripeClient()

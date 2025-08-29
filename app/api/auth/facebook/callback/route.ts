@@ -3,6 +3,8 @@ import { socialMediaConfig } from "@/lib/integrations/social-media-config"
 import { createServerClient } from "@/lib/supabase/server"
 import { cookies } from "next/headers"
 
+export const dynamic = "force-dynamic"
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -11,11 +13,19 @@ export async function GET(request: NextRequest) {
     const error = searchParams.get("error")
 
     if (error) {
-      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/integrations?error=${error}`)
+      const baseUrl =
+        process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL
+          ? `https://${process.env.VERCEL_URL}`
+          : "http://localhost:3000"
+      return NextResponse.redirect(`${baseUrl}/integrations?error=${error}`)
     }
 
     if (!code || !state) {
-      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/integrations?error=missing_params`)
+      const baseUrl =
+        process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL
+          ? `https://${process.env.VERCEL_URL}`
+          : "http://localhost:3000"
+      return NextResponse.redirect(`${baseUrl}/integrations?error=missing_params`)
     }
 
     // Exchange code for access token
@@ -33,7 +43,11 @@ export async function GET(request: NextRequest) {
     const tokenData = await tokenResponse.json()
 
     if (!tokenData.access_token) {
-      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/integrations?error=token_exchange_failed`)
+      const baseUrl =
+        process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL
+          ? `https://${process.env.VERCEL_URL}`
+          : "http://localhost:3000"
+      return NextResponse.redirect(`${baseUrl}/integrations?error=token_exchange_failed`)
     }
 
     // Get user's Facebook pages
@@ -63,9 +77,17 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/integrations?success=facebook_connected`)
+    const baseUrl =
+      process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : "http://localhost:3000"
+    return NextResponse.redirect(`${baseUrl}/integrations?success=facebook_connected`)
   } catch (error) {
     console.error("Facebook callback error:", error)
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/integrations?error=callback_failed`)
+    const baseUrl =
+      process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : "http://localhost:3000"
+    return NextResponse.redirect(`${baseUrl}/integrations?error=callback_failed`)
   }
 }
