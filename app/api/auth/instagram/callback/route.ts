@@ -3,6 +3,8 @@ import { socialMediaConfig } from "@/lib/integrations/social-media-config"
 import { createServerClient } from "@/lib/supabase/server"
 import { cookies } from "next/headers"
 
+export const dynamic = "force-dynamic"
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -10,12 +12,17 @@ export async function GET(request: NextRequest) {
     const state = searchParams.get("state")
     const error = searchParams.get("error")
 
+    const baseUrl =
+      process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : "http://localhost:3000"
+
     if (error) {
-      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/integrations?error=${error}`)
+      return NextResponse.redirect(`${baseUrl}/integrations?error=${error}`)
     }
 
     if (!code || !state) {
-      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/integrations?error=missing_params`)
+      return NextResponse.redirect(`${baseUrl}/integrations?error=missing_params`)
     }
 
     const restaurantId = state.replace("instagram_", "")
@@ -35,7 +42,7 @@ export async function GET(request: NextRequest) {
     const tokenData = await tokenResponse.json()
 
     if (!tokenData.access_token) {
-      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/integrations?error=token_exchange_failed`)
+      return NextResponse.redirect(`${baseUrl}/integrations?error=token_exchange_failed`)
     }
 
     // Get Instagram Business accounts
@@ -65,9 +72,13 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/integrations?success=instagram_connected`)
+    return NextResponse.redirect(`${baseUrl}/integrations?success=instagram_connected`)
   } catch (error) {
     console.error("Instagram callback error:", error)
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/integrations?error=callback_failed`)
+    const baseUrl =
+      process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : "http://localhost:3000"
+    return NextResponse.redirect(`${baseUrl}/integrations?error=callback_failed`)
   }
 }

@@ -1,6 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase/server"
 
+export const dynamic = "force-dynamic"
+
 function isSupabaseConfigured(): boolean {
   return !!(
     process.env.NEXT_PUBLIC_SUPABASE_URL &&

@@ -3,6 +3,8 @@ import { createServerClient } from "@/lib/supabase/server"
 import { cookies } from "next/headers"
 import { PHASE0_CONFIG } from "@/lib/stripe/phase0-config"
 
+export const dynamic = "force-dynamic"
+
 export async function GET(request: NextRequest) {
   try {
     const cookieStore = cookies()

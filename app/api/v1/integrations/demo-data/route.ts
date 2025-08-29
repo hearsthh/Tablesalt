@@ -1,6 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 
+export const dynamic = "force-dynamic"
+
 // Demo data for Phase 0 testing
 const DEMO_DATA = {
   "google-my-business": {
